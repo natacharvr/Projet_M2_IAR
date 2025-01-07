@@ -1,8 +1,6 @@
 BUILD_DIR=./build
 POGO_SDK=../..
 
-CC=gcc
-
 POGO_SDK_TOOLS=$(POGO_SDK)/tools
 POGO_SDK_INCS=$(POGO_SDK)/includes
 POGO_SDK_LIBS=$(POGO_SDK)/libs
