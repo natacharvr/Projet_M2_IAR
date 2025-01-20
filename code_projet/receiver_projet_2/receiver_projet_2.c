@@ -203,8 +203,18 @@ int main(void) {
         }
         room_available = true;
     }
+    // send messages to warn the other robot that we are close
+    for (int i = 0; i < 10; i++) {
+        short_message_t mes;
+        sprintf((char*)(mes.payload), "close");
+        mes.header.payload_length = strlen((char*)(mes.payload)) +1;
+        pogobot_infrared_set_power(1);
+        pogobot_infrared_sendRawShortMessage(
+            0, &mes );
+        printf("close\n");
+    }
     return 0;
 
 }
 
-// idea : when the robots are close, they turn in one direction and both become a sender 
+// idea : when the robots are close, the receiver becomes a sender 
