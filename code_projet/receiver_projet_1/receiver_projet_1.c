@@ -6,22 +6,8 @@
 /** \file
 receiver side.
 
-This file implements the receiver side of demo "D2.1 Testing
-communication: introverted listener".
-
-It exercises the following features: RGB LED, low-level infrared
-transmission API.
-
-Details:
-
 Robot B continuously listen in each direction.
-- for each message, change RGB LED according to which of its own IR received a
-message:
-- Robot A’s front: red
-- Robot A’s left: green
-- Robot A’s back: blue
-- Robot A’s right: yellow
-- No message: cyan/black
+
 
 */
 
@@ -51,7 +37,7 @@ const rgb8_t colors[] = {
 #include <stdlib.h>
 #include <string.h>
 
-#define HASH_TABLE_SIZE 10
+#define HASH_TABLE_SIZE 5
 
 typedef struct Node {
     uint32_t timepoint;
@@ -136,46 +122,99 @@ int main(void) {
     NodeTable table;
     initializeHashTable(&table);
     bool room_available = true;
+    bool far_away = true;
+    while (far_away) {
+        initializeHashTable(&table);
 
-    while (room_available)
-    {
-        pogobot_infrared_update();
-
-        /* read reception fifo buffer */
-        if ( pogobot_infrared_message_available() )
+        while (room_available)
         {
-            // pogobot_motor_set(motorL, motorStop);
+            pogobot_infrared_update();
 
-            while ( pogobot_infrared_message_available() )
+            /* read reception fifo buffer */
+            if ( pogobot_infrared_message_available() )
             {
-                message_t mr;
-                pogobot_infrared_recover_next_message( &mr );
-                if (mr.header._receiver_ir_index != 0) {
-                    continue;
+                while ( pogobot_infrared_message_available() )
+                {
+                    message_t mr;
+                    pogobot_infrared_recover_next_message( &mr );
+                    if (mr.header._receiver_ir_index != 0) { // has to be front to advance to other bot
+                        continue;
+                    }
+
+                    int power_level = mr.payload[0] - '0';
+                    printf("color_index: %d\n", power_level);
+                    const rgb8_t *const color = &( colors[power_level] );
+
+                    pogobot_led_setColor( color->r, color->g, color->b );
+                    printf( "RECV: len %d at %d [%s]\n", mr.header.payload_length, mr.header._receiver_ir_index,
+                            mr.payload );
+                    printf("%ld\n", get_timepoint(mr.payload));
+                    room_available = increment_timepoint(get_timepoint(mr.payload), power_level, &table);
+                    msleep( 10 );
                 }
-
-                int power_level = mr.payload[0] - '0';
-                printf("color_index: %d\n", power_level);
-                const rgb8_t *const color = &( colors[power_level] );
-
-                pogobot_led_setColor( color->r, color->g, color->b );
-                printf( "RECV: len %d at %d [%s]\n", mr.header.payload_length, mr.header._receiver_ir_index,
-                        mr.payload );
-                printf("%ld\n", get_timepoint(mr.payload));
-                room_available = increment_timepoint(get_timepoint(mr.payload), power_level, &table);
-                msleep( 10 );
-
+            } else {
+                    pogobot_motor_power_set(motorL, motorFull);
+                    msleep( 10 );
+                    pogobot_motor_power_set(motorL, motorStop);
+                    msleep( 10 );
             }
-        } else {
-                pogobot_motor_set(motorL, motorFull);
-                msleep( 10 );
-                pogobot_motor_set(motorL, motorStop);
-                
-
         }
+        printf("fin d'acquisition\n");
+        display_table(&table);
+
+        float mean_level_3 = 0;
+        float mean_level_2 = 0;
+        float mean_level_1 = 0;
+        int filled_cell = 0;
+
+        for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+            for (int j = 0; j < HASH_TABLE_SIZE; j++) {
+                Node *current = &table.hash_table[i][j];
+                if (current->timepoint != -1) {
+                    mean_level_3 += current->count_max;
+                    mean_level_2 += current->count_two_third;
+                    mean_level_1 += current->count_one_third;
+                    filled_cell ++;
+                }
+                
+            }
+        }
+        mean_level_3 = mean_level_3 / filled_cell;
+        mean_level_2 = mean_level_2 / filled_cell;
+        mean_level_1 = mean_level_1 / filled_cell;
+
+        printf("mean_level_3: %d, mean_level_2: %d, mean_level_1: %d\n", (int)mean_level_3*100, (int)mean_level_2*100, (int)mean_level_1*100);
+        printf("%d", (int)(mean_level_3 - mean_level_1)*100);
+
+        if (mean_level_1 - mean_level_3 > 1.f) { // TODO : finetune the threshold
+            // far_away = false;
+            return 0;
+        }
+        else { // advance towards the other robot
+            pogobot_motor_power_set(motorL, motorFull);
+            pogobot_motor_power_set(motorR, motorFull);
+            msleep( 100 );
+            pogobot_motor_power_set(motorL, motorStop);
+            pogobot_motor_power_set(motorR, motorStop);
+
+            // remove messages received during the movement
+            pogobot_infrared_clear_message_queue() ;
+            msleep( 100 );
+        }
+        room_available = true;
     }
-    printf("fin d'acquisition\n");
-    display_table(&table);
+    // send messages to warn the other robot that we are close
+    for (int i = 0; i < 10; i++) {
+        short_message_t mes;
+        sprintf((char*)(mes.payload), "close");
+        mes.header.payload_length = strlen((char*)(mes.payload)) +1;
+        pogobot_infrared_set_power(1);
+        pogobot_infrared_sendRawShortMessage(
+            0, &mes );
+        printf("close\n");
+    }
     return 0;
 
 }
+
+// idea : when the robots are close, the receiver becomes a sender 

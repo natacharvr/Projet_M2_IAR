@@ -5,26 +5,7 @@
 
 
 /** \file
-Pogobot demo source code D2.3. (sender code)
-
-It exercises the following features: RGB LED API, low-level infrared
-transmission API, stopwatch API.
-
-Details:
-
-- Two robots (A and B) are not moving and located next to one another (close
-enough for IR to work)
-- Robot A continuously emits one specific message in all directions (~broadcast)
-    - the content of the message changes every two seconds
-    - a message contains:
-        -name of robot (“robot A”)
-        -a RGB value out of #FF0000, #00FF00, #0000FF, #FF00FF, #FFFF00, #00FFFF
-    -RBG LED matches the message’s RGB values (i.e. also changes every two
-seconds)
-
-
-Testing protocol: move Robot B by hand to test all combinations, including “no
-message”.
+sender side.
 
 */
 
@@ -66,6 +47,8 @@ int main(void) {
 
     printf("init ok\n");
 
+    int direction = 0;
+
     pogobot_led_setColor( 25, 25, 25 );
     time_reference_t mystopwatch;
     pogobot_stopwatch_reset( &mystopwatch );
@@ -88,7 +71,7 @@ int main(void) {
             printf( "TRANS: %s, len = %d \n", mes.payload, mes.header.payload_length );
 
             pogobot_infrared_sendRawShortMessage(
-                0, &mes );
+                direction, &mes );
             // pogobot_infrared_sendRawShortMessage(
             //     1, &mes );
             // pogobot_infrared_sendRawShortMessage(
@@ -99,6 +82,23 @@ int main(void) {
             //     4, &mes );
 
         msleep( 10 );
+        }
+        // this does snot work well, when the robots are very close, the emitter does not receive the messages
+        pogobot_infrared_update();
+
+        if (pogobot_infrared_message_available()) {
+            while (pogobot_infrared_message_available()) {
+                message_t mr;
+                pogobot_infrared_recover_next_message(&mr);
+                printf("RECV: len %d at %d [%s]\n", mr.header.payload_length, mr.header._receiver_ir_index, mr.payload);
+                int used_direction = mr.header._receiver_ir_index;
+                if (used_direction == direction) {
+                    direction ++;
+                    if (direction > 3) {
+                        return 0;
+                    }
+                }
+            }
         }
     }
 
