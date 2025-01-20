@@ -133,13 +133,11 @@ int main(void) {
             /* read reception fifo buffer */
             if ( pogobot_infrared_message_available() )
             {
-                // pogobot_motor_set(motorL, motorStop);
-
                 while ( pogobot_infrared_message_available() )
                 {
                     message_t mr;
                     pogobot_infrared_recover_next_message( &mr );
-                    if (mr.header._receiver_ir_index != 2) {
+                    if (mr.header._receiver_ir_index != 0) { // has to be front to advance to other bot
                         continue;
                     }
 
@@ -153,12 +151,12 @@ int main(void) {
                     printf("%ld\n", get_timepoint(mr.payload));
                     room_available = increment_timepoint(get_timepoint(mr.payload), power_level, &table);
                     msleep( 10 );
-
                 }
             } else {
-                    pogobot_motor_set(motorL, motorFull);
+                    pogobot_motor_power_set(motorL, motorFull);
                     msleep( 10 );
-                    pogobot_motor_set(motorL, motorStop);
+                    pogobot_motor_power_set(motorL, motorStop);
+                    msleep( 10 );
             }
         }
         printf("fin d'acquisition\n");
@@ -186,14 +184,27 @@ int main(void) {
         mean_level_1 = mean_level_1 / filled_cell;
 
         printf("mean_level_3: %d, mean_level_2: %d, mean_level_1: %d\n", (int)mean_level_3*100, (int)mean_level_2*100, (int)mean_level_1*100);
-        // printf("%d", (int)mean_level_3*100);
+        printf("%d", (int)(mean_level_3 - mean_level_1)*100);
 
-        if (mean_level_3 - mean_level_1 > 1.f) {
+        if (mean_level_1 - mean_level_3 > 1.f) { // TODO : finetune the threshold
             // far_away = false;
             return 0;
+        }
+        else { // advance towards the other robot
+            pogobot_motor_power_set(motorL, motorFull);
+            pogobot_motor_power_set(motorR, motorFull);
+            msleep( 100 );
+            pogobot_motor_power_set(motorL, motorStop);
+            pogobot_motor_power_set(motorR, motorStop);
+
+            // remove messages received during the movement
+            pogobot_infrared_clear_message_queue() ;
+            msleep( 100 );
         }
         room_available = true;
     }
     return 0;
 
 }
+
+// idea : when the robots are close, they turn in one direction and both become a sender 
