@@ -89,8 +89,16 @@ int main(void) {
 
             pogobot_infrared_sendRawShortMessage(
                 0, &mes );
+            // pogobot_infrared_sendRawShortMessage(
+            //     1, &mes );
+            // pogobot_infrared_sendRawShortMessage(
+            //     2, &mes );
+            // pogobot_infrared_sendRawShortMessage(
+            //     3, &mes );
+            // pogobot_infrared_sendRawShortMessage(
+            //     4, &mes );
 
-        msleep( 100 );
+        msleep( 10 );
         }
     }
 
