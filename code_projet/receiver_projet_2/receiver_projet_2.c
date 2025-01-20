@@ -17,7 +17,14 @@ Robot B continuously listen in each direction.
 #include <string.h>
 #include "pogobot.h"
 
+#define message_length_bytes ( sizeof(sizeof(char)*2 + sizeof(int32_t)))
 
+unsigned char *messages[4] = {
+    (unsigned char *) "0",
+    (unsigned char *) "1",
+    (unsigned char *) "2",
+    (unsigned char *) "3",
+};
 typedef struct rgb8_t
 {
     uint8_t r;
@@ -37,7 +44,8 @@ const rgb8_t colors[] = {
 #include <stdlib.h>
 #include <string.h>
 
-#define HASH_TABLE_SIZE 5
+#define HASH_TABLE_SIZE 4
+#define TIME_TO_CHANGE_POS 600
 
 typedef struct Node {
     uint32_t timepoint;
@@ -117,12 +125,13 @@ int main(void) {
 
     printf("init ok\n");
 
-    pogobot_led_setColor( 25, 25, 25 );
+    pogobot_led_setColor( 231, 78, 152 );
 
     NodeTable table;
     initializeHashTable(&table);
     bool room_available = true;
     bool far_away = true;
+    int count = 0;
     while (far_away) {
         initializeHashTable(&table);
 
@@ -133,6 +142,7 @@ int main(void) {
             /* read reception fifo buffer */
             if ( pogobot_infrared_message_available() )
             {
+                count = 0;
                 while ( pogobot_infrared_message_available() )
                 {
                     message_t mr;
@@ -153,10 +163,19 @@ int main(void) {
                     msleep( 10 );
                 }
             } else {
-                    pogobot_motor_power_set(motorL, motorFull);
-                    msleep( 10 );
-                    pogobot_motor_power_set(motorL, motorStop);
-                    msleep( 10 );
+                count ++;
+                pogobot_motor_power_set(motorL, motorFull);
+                msleep( 10 );
+                pogobot_motor_power_set(motorL, motorStop);
+                msleep( 10 );
+            }
+            if (count > TIME_TO_CHANGE_POS) { // change position if no message in about 6 seconds
+                pogobot_motor_power_set(motorL, motorFull);
+                pogobot_motor_power_set(motorR, motorFull);
+                msleep( 500 );
+                pogobot_motor_power_set(motorL, motorStop);
+                pogobot_motor_power_set(motorR, motorStop);
+                count = 0;
             }
         }
         printf("fin d'acquisition\n");
@@ -184,11 +203,12 @@ int main(void) {
         mean_level_1 = mean_level_1 / filled_cell;
 
         printf("mean_level_3: %d, mean_level_2: %d, mean_level_1: %d\n", (int)mean_level_3*100, (int)mean_level_2*100, (int)mean_level_1*100);
-        printf("%d", (int)(mean_level_3 - mean_level_1)*100);
+        printf("%d", (int)(mean_level_1 - mean_level_3)*100);
 
         if (mean_level_1 - mean_level_3 > 1.f) { // TODO : finetune the threshold
-            // far_away = false;
-            return 0;
+            far_away = false;
+            continue;
+            // return 0;
         }
         else { // advance towards the other robot
             pogobot_motor_power_set(motorL, motorFull);
@@ -212,8 +232,62 @@ int main(void) {
         pogobot_infrared_sendRawShortMessage(
             0, &mes );
         printf("close\n");
+        msleep( 100 );
+        pogobot_led_setColor( 231, 78, 152 );
     }
-    return 0;
+    msleep( 10000 );
+    printf("Je deviens un sender !!\n");
+
+    // _______________________ SENDER ________________________
+    pogobot_init();
+
+    printf("init ok\n");
+
+    int direction = 2;
+
+    time_reference_t mystopwatch;
+    pogobot_stopwatch_reset( &mystopwatch );
+    
+    while (1)
+    {
+        for (int power_level = 0; power_level < 4; power_level ++) {
+            pogobot_infrared_set_power(power_level);
+            const rgb8_t *const color = &( colors[power_level] );
+
+            pogobot_led_setColor( color->r, color->g, color->b );
+
+            pogobot_infrared_update();
+
+            short_message_t mes;
+            sprintf((char*)(mes.payload), "%d %lu", power_level, pogobot_stopwatch_get_elapsed_microseconds(&mystopwatch));
+            // mes.header.payload_length = message_length_bytes;
+            mes.header.payload_length = strlen((char*)(mes.payload)) +1;
+
+            printf( "TRANS: %s, len = %d \n", mes.payload, mes.header.payload_length );
+
+            pogobot_infrared_sendRawShortMessage(
+                direction, &mes );
+
+        msleep( 10 );
+        }
+        // this does snot work well, when the robots are very close, the emitter does not receive the messages
+        pogobot_infrared_update();
+
+        if (pogobot_infrared_message_available()) {
+            while (pogobot_infrared_message_available()) {
+                message_t mr;
+                pogobot_infrared_recover_next_message(&mr);
+                printf("RECV: len %d at %d [%s]\n", mr.header.payload_length, mr.header._receiver_ir_index, mr.payload);
+                int used_direction = mr.header._receiver_ir_index;
+                if (used_direction == direction) {
+                    direction ++;
+                    if (direction > 3) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    } 
 
 }
 
