@@ -4,9 +4,6 @@
 
 
 /** \file
-receiver side.
-
-Robot B continuously listen in each direction.
 
 
 */
@@ -267,6 +264,8 @@ int main(void) {
 
             pogobot_infrared_sendRawShortMessage(
                 direction, &mes );
+            pogobot_infrared_sendRawShortMessage(
+                (direction+2)%4, &mes );
 
         msleep( 10 );
         }

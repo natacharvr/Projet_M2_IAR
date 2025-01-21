@@ -72,6 +72,8 @@ int main(void) {
 
             pogobot_infrared_sendRawShortMessage(
                 direction, &mes );
+            pogobot_infrared_sendRawShortMessage(
+                (direction+2)%2, &mes );
 
         msleep( 10 );
         }

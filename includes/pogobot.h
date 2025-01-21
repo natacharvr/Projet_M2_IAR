@@ -478,7 +478,7 @@ uint32_t pogobot_infrared_sendShortMessage_omni( uint8_t *message, uint16_t mess
 void pogobot_infrared_get_receiver_error_counter( slip_error_counter_s *error_counter, uint8_t ir_index );
 
 /** (pogobot_infrared_reset_receiver_error_counter)
- * Reset all reveiver error counter
+ * Reset all receiver error counter
  *
  * # Parameters
  * - none

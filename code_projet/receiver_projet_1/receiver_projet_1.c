@@ -6,7 +6,9 @@
 /** \file
 receiver side.
 
-Robot B continuously listen in each direction.
+Robot B listens to the messages sent by robot A and moves towards it.
+It counts the number of messages received of each power_level and determines if they are close or not.
+If they are not close, 
 
 
 */
@@ -38,6 +40,7 @@ const rgb8_t colors[] = {
 #include <string.h>
 
 #define HASH_TABLE_SIZE 5
+#define TIME_TO_CHANGE_POS 600
 
 typedef struct Node {
     uint32_t timepoint;
@@ -123,6 +126,7 @@ int main(void) {
     initializeHashTable(&table);
     bool room_available = true;
     bool far_away = true;
+    int count = 0;
     while (far_away) {
         initializeHashTable(&table);
 
@@ -133,6 +137,7 @@ int main(void) {
             /* read reception fifo buffer */
             if ( pogobot_infrared_message_available() )
             {
+                count = 0;
                 while ( pogobot_infrared_message_available() )
                 {
                     message_t mr;
@@ -153,10 +158,19 @@ int main(void) {
                     msleep( 10 );
                 }
             } else {
-                    pogobot_motor_power_set(motorL, motorFull);
-                    msleep( 10 );
-                    pogobot_motor_power_set(motorL, motorStop);
-                    msleep( 10 );
+                count ++;
+                pogobot_motor_power_set(motorL, motorFull);
+                msleep( 10 );
+                pogobot_motor_power_set(motorL, motorStop);
+                msleep( 10 );
+            }
+            if (count > TIME_TO_CHANGE_POS) { // change position if no message in about 6 seconds
+                pogobot_motor_power_set(motorL, motorFull);
+                pogobot_motor_power_set(motorR, motorFull);
+                msleep( 500 );
+                pogobot_motor_power_set(motorL, motorStop);
+                pogobot_motor_power_set(motorR, motorStop);
+                count = 0;
             }
         }
         printf("fin d'acquisition\n");
@@ -217,4 +231,3 @@ int main(void) {
 
 }
 
-// idea : when the robots are close, the receiver becomes a sender 
