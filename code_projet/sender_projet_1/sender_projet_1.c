@@ -1,12 +1,13 @@
 /**
  * POGOBOT
- * Natacha Rivière
+ * Natacha Rivière, Léa Movsessian
 **/
 
 
 /** \file
 sender side.
-
+Continuoulsy sends messages at all power levels
+each message contains the power level and the timestamp at which it was sent
 */
 
 /* clang-format-ok */
@@ -70,6 +71,8 @@ int main(void) {
 
             printf( "TRANS: %s, len = %d \n", mes.payload, mes.header.payload_length );
 
+
+            // send at front and back to avoid weird alignments but cover enough angles
             pogobot_infrared_sendRawShortMessage(
                 direction, &mes );
             pogobot_infrared_sendRawShortMessage(
@@ -77,6 +80,7 @@ int main(void) {
 
         msleep( 10 );
         }
+        
         // this does snot work well, when the robots are very close, the emitter does not receive the messages
         pogobot_infrared_update();
 

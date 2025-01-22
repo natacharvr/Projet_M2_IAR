@@ -5,9 +5,15 @@
 
 /** \file
 
+receiver side.
 
-*/
+Robot B listens to the messages sent by robot A.
+the bot moves randomly at first and then towards the other bot when it receives messages.
 
+It counts the number of messages received of each power_level and determines if they are close or not.
+If the bot is far from the other, it tries to advance towards it
+
+When the bot is close to the emittor, it warns them and becomes an emittor to attract other bots
 /* clang-format-ok */
 
 #include <stdio.h>
@@ -290,4 +296,3 @@ int main(void) {
 
 }
 
-// idea : when the robots are close, the receiver becomes a sender 

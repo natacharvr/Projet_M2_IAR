@@ -1,0 +1,27 @@
+timepoint: 35, count_one_third: 34, count_two_third: 26, count_max: 20
+timepoint: 40, count_one_third: 34, count_two_third: 19, count_max: 22
+timepoint: 45, count_one_third: 32, count_two_third: 21, count_max: 23
+timepoint: 50, count_one_third: 34, count_two_third: 19, count_max: 22
+timepoint: 55, count_one_third: 32, count_two_third: 22, count_max: 21
+timepoint: 36, count_one_third: 32, count_two_third: 19, count_max: 23
+timepoint: 41, count_one_third: 31, count_two_third: 20, count_max: 21
+timepoint: 46, count_one_third: 35, count_two_third: 20, count_max: 20
+timepoint: 51, count_one_third: 32, count_two_third: 20, count_max: 21
+timepoint: 56, count_one_third: 31, count_two_third: 20, count_max: 24
+timepoint: 37, count_one_third: 35, count_two_third: 21, count_max: 20
+timepoint: 42, count_one_third: 34, count_two_third: 23, count_max: 20
+timepoint: 47, count_one_third: 32, count_two_third: 21, count_max: 21
+timepoint: 52, count_one_third: 33, count_two_third: 17, count_max: 25
+timepoint: 57, count_one_third: 31, count_two_third: 19, count_max: 22
+timepoint: 38, count_one_third: 32, count_two_third: 20, count_max: 22
+timepoint: 43, count_one_third: 28, count_two_third: 22, count_max: 21
+timepoint: 48, count_one_third: 30, count_two_third: 21, count_max: 23
+timepoint: 53, count_one_third: 36, count_two_third: 20, count_max: 21
+timepoint: 58, count_one_third: 33, count_two_third: 21, count_max: 20
+timepoint: 34, count_one_third: 6, count_two_third: 8, count_max: 8
+timepoint: 39, count_one_third: 32, count_two_third: 20, count_max: 23
+timepoint: 44, count_one_third: 38, count_two_third: 19, count_max: 18
+timepoint: 49, count_one_third: 32, count_two_third: 18, count_max: 23
+timepoint: 54, count_one_third: 31, count_two_third: 20, count_max: 22
+mean_level_3: 2100, mean_level_2: 1900, mean_level_1: 3100
+

@@ -1,16 +1,17 @@
 /**
- * Natacha Rivière
+ * Natacha Rivière, Léa Movsessian
 **/
 
 
 /** \file
 receiver side.
 
-Robot B listens to the messages sent by robot A and moves towards it.
+Robot B listens to the messages sent by robot A.
 It counts the number of messages received of each power_level and determines if they are close or not.
-If they are not close, 
 
+It prints the counters received
 
+Commented code allows the bot to move randomly at first and then towards the other bot chen it receives messages.
 */
 
 /* clang-format-ok */
@@ -126,7 +127,7 @@ int main(void) {
     initializeHashTable(&table);
     bool room_available = true;
     bool far_away = true;
-    int count = 0;
+    // int count = 0;
     while (far_away) {
         initializeHashTable(&table);
 
@@ -137,7 +138,7 @@ int main(void) {
             /* read reception fifo buffer */
             if ( pogobot_infrared_message_available() )
             {
-                count = 0;
+                // count = 0;
                 while ( pogobot_infrared_message_available() )
                 {
                     message_t mr;
@@ -157,21 +158,22 @@ int main(void) {
                     room_available = increment_timepoint(get_timepoint(mr.payload), power_level, &table);
                     msleep( 10 );
                 }
-            } else {
-                count ++;
-                pogobot_motor_power_set(motorL, motorFull);
+            }
+            else {
+            //     count ++;
+            //     pogobot_motor_power_set(motorL, motorFull);
                 msleep( 10 );
-                pogobot_motor_power_set(motorL, motorStop);
+            //     pogobot_motor_power_set(motorL, motorStop);
                 msleep( 10 );
             }
-            if (count > TIME_TO_CHANGE_POS) { // change position if no message in about 6 seconds
-                pogobot_motor_power_set(motorL, motorFull);
-                pogobot_motor_power_set(motorR, motorFull);
-                msleep( 500 );
-                pogobot_motor_power_set(motorL, motorStop);
-                pogobot_motor_power_set(motorR, motorStop);
-                count = 0;
-            }
+            // if (count > TIME_TO_CHANGE_POS) { // change position if no message in about 6 seconds
+            //     pogobot_motor_power_set(motorL, motorFull);
+            //     pogobot_motor_power_set(motorR, motorFull);
+            //     msleep( 500 );
+            //     pogobot_motor_power_set(motorL, motorStop);
+            //     pogobot_motor_power_set(motorR, motorStop);
+            //     count = 0;
+            // }
         }
         printf("fin d'acquisition\n");
         display_table(&table);
@@ -200,33 +202,33 @@ int main(void) {
         printf("mean_level_3: %d, mean_level_2: %d, mean_level_1: %d\n", (int)mean_level_3*100, (int)mean_level_2*100, (int)mean_level_1*100);
         printf("%d", (int)(mean_level_3 - mean_level_1)*100);
 
-        if (mean_level_1 - mean_level_3 > 1.f) { // TODO : finetune the threshold
+        // if (mean_level_1 - mean_level_3 > 1.f) { // TODO : finetune the threshold
             // far_away = false;
-            return 0;
-        }
-        else { // advance towards the other robot
-            pogobot_motor_power_set(motorL, motorFull);
-            pogobot_motor_power_set(motorR, motorFull);
-            msleep( 100 );
-            pogobot_motor_power_set(motorL, motorStop);
-            pogobot_motor_power_set(motorR, motorStop);
+            // return 0;
+        // }
+        // else { // advance towards the other robot
+        //     pogobot_motor_power_set(motorL, motorFull);
+        //     pogobot_motor_power_set(motorR, motorFull);
+        //     msleep( 100 );
+        //     pogobot_motor_power_set(motorL, motorStop);
+        //     pogobot_motor_power_set(motorR, motorStop);
 
             // remove messages received during the movement
-            pogobot_infrared_clear_message_queue() ;
-            msleep( 100 );
-        }
+            // pogobot_infrared_clear_message_queue() ;
+            // msleep( 100 );
+        // }
         room_available = true;
     }
     // send messages to warn the other robot that we are close
-    for (int i = 0; i < 10; i++) {
-        short_message_t mes;
-        sprintf((char*)(mes.payload), "close");
-        mes.header.payload_length = strlen((char*)(mes.payload)) +1;
-        pogobot_infrared_set_power(1);
-        pogobot_infrared_sendRawShortMessage(
-            0, &mes );
-        printf("close\n");
-    }
+    // for (int i = 0; i < 10; i++) {
+        // short_message_t mes;
+        // sprintf((char*)(mes.payload), "close");
+        // mes.header.payload_length = strlen((char*)(mes.payload)) +1;
+        // pogobot_infrared_set_power(1);
+        // pogobot_infrared_sendRawShortMessage(
+            // 0, &mes );
+        // printf("close\n");
+    // }
     return 0;
 
 }
